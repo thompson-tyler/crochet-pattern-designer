@@ -68,22 +68,6 @@ export default function PatternSketcher({
         let groupSelection = new Set<Stitch>();
         let dragSelectionBox: SelectionBox | null = null;
 
-        const exportPattern = () => {
-            const jsonString = stitchesToJSON(stitches);
-            const filename =
-                "exported pattern - " +
-                new Date().toISOString().split(".").shift() +
-                ".json";
-            // Create a blob and download it
-            const blob = new Blob([jsonString], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-        };
-
         const setDragging = (stitch: Stitch) =>
             (dragging = { stitch, start: p.createVector(p.mouseX, p.mouseY) });
         const draggingStitch = () => (dragging ? dragging.stitch : null);
@@ -131,6 +115,34 @@ export default function PatternSketcher({
                 nextParent = stitch.parent || FIRST_STITCH;
             // Remove the stitch
             stitches = stitches.filter((s) => s !== stitch);
+        };
+
+        const exportPattern = () => {
+            const jsonString = stitchesToJSON(stitches);
+            const filename =
+                "exported pattern - " +
+                new Date().toISOString().split(".").shift() +
+                ".json";
+            // Create a blob and download it
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        const savePattern = () => {
+            p.background(BACKGROUND_COLOR);
+            for (const stitch of stitches) {
+                p.stroke(STITCH_COLOR);
+                stitch.type === StitchType.Slip
+                    ? p.fill(STITCH_COLOR)
+                    : p.noFill();
+                drawStitch(stitch);
+            }
+            p.saveCanvas("saved pattern - " + new Date().toISOString(), "png");
         };
 
         const canDrag = (stitch: Stitch, m: EditingMode = mode): boolean => {
@@ -666,6 +678,9 @@ export default function PatternSketcher({
                     break;
                 case "e":
                     exportPattern();
+                    break;
+                case "s":
+                    savePattern();
                     break;
             }
         };
