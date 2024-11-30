@@ -10,7 +10,6 @@ enum EditingMode {
     Inserting,
     Viewing,
     Rebasing,
-    Simulating,
 }
 
 type DragState = {
@@ -142,7 +141,6 @@ export default function PatternSketcher({
                 case EditingMode.Deleting:
                     return stitch !== FIRST_STITCH;
                 case EditingMode.Viewing:
-                case EditingMode.Simulating:
                     return false;
                 case EditingMode.Rebasing:
                     return dragging
@@ -210,7 +208,6 @@ export default function PatternSketcher({
                 case EditingMode.Moving:
                 case EditingMode.Viewing:
                 case EditingMode.Inserting:
-                case EditingMode.Simulating:
                     return headAnchor(stitch);
                 case EditingMode.Deleting:
                     return middleAnchor(stitch);
@@ -538,8 +535,6 @@ export default function PatternSketcher({
                         return "Viewing";
                     case EditingMode.Rebasing:
                         return "Rebasing";
-                    case EditingMode.Simulating:
-                        return "Simulating";
                 }
             };
             p.text(getModeText(), 0, textSize);
@@ -644,9 +639,6 @@ export default function PatternSketcher({
                     break;
                 case "b":
                     setMode(EditingMode.Rebasing);
-                    break;
-                case "s":
-                    setMode(EditingMode.Simulating);
                     break;
                 case "1":
                     stitchType = StitchType.Chain;
