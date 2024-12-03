@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { Stitch } from "./types";
+import { Stitch, StitchType } from "./types";
 
 export function stitchesToJSON(stitches: Stitch[]): string {
     const exportableStitches = stitches.map((s) => ({
@@ -19,21 +19,27 @@ export function jsonToStitches(jsonString: string): Stitch[] {
     const stitches: Stitch[] = json.map((stitch: any) => {
         // Validate the stitch
         if (stitch.x === undefined || typeof stitch.x !== "number")
-            throw new Error(`Stitch (id=${stitch.id}) has invalid x`);
+            throw new Error(`Stitch has invalid x`);
         if (stitch.y === undefined || typeof stitch.y !== "number")
-            throw new Error(`Stitch (id=${stitch.id}) has invalid y`);
+            throw new Error(`Stitch has invalid y`);
         if (
             stitch.parent === undefined ||
-            (stitch.parent !== null && typeof stitch.parent !== "number")
+            (stitch.parent !== null &&
+                (typeof stitch.parent !== "number" ||
+                    stitch.parent < 0 ||
+                    stitch.parent >= json.length))
         )
-            throw new Error(`Stitch (id=${stitch.id}) has invalid parent`);
+            throw new Error(`Stitch has invalid parent`);
         if (
             stitch.base === undefined ||
-            (stitch.base !== null && typeof stitch.base !== "number")
+            (stitch.base !== null &&
+                (typeof stitch.base !== "number" ||
+                    stitch.base < 0 ||
+                    stitch.base >= json.length))
         )
-            throw new Error(`Stitch (id=${stitch.id}) has invalid base`);
+            throw new Error(`Stitch has invalid base`);
         if (stitch.type === undefined || typeof stitch.type !== "number")
-            throw new Error(`Stitch (id=${stitch.id}) has invalid type`);
+            throw new Error(`Stitch has invalid type`);
         return {
             pos: p5.Vector.fromAngle(0).set(stitch.x, stitch.y),
             parent: null,
