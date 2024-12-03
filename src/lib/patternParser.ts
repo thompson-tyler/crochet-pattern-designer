@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { Stitch, StitchType } from "./types";
+import { Stitch } from "./types";
 
 export function stitchesToJSON(stitches: Stitch[]): string {
     const exportableStitches = stitches.map((s) => ({
