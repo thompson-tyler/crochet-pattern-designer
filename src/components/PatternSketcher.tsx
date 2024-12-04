@@ -654,9 +654,6 @@ export default function PatternSketcher({
                 case "i":
                     setMode(EditingMode.Inserting);
                     break;
-                case "v":
-                    setMode(EditingMode.Viewing);
-                    break;
                 case "b":
                     setMode(EditingMode.Rebasing);
                     break;
@@ -713,6 +710,32 @@ export default function PatternSketcher({
                         groupSelection.forEach((s) =>
                             s.pos.add(0, -getArrowKeyMoveAmount())
                         );
+                    break;
+                case "h":
+                    if (
+                        mode === EditingMode.Moving &&
+                        groupSelection.size > 0
+                    ) {
+                        const averageY =
+                            Array.from(groupSelection).reduce(
+                                (sum, s) => sum + s.pos.y,
+                                0
+                            ) / groupSelection.size;
+                        groupSelection.forEach((s) => (s.pos.y = averageY));
+                    }
+                    break;
+                case "v":
+                    if (
+                        mode === EditingMode.Moving &&
+                        groupSelection.size > 0
+                    ) {
+                        const averageX =
+                            Array.from(groupSelection).reduce(
+                                (sum, s) => sum + s.pos.x,
+                                0
+                            ) / groupSelection.size;
+                        groupSelection.forEach((s) => (s.pos.x = averageX));
+                    }
                     break;
             }
         };

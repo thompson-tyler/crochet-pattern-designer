@@ -46,7 +46,10 @@ export default function App() {
             <i>Right now there is no UI, so we rely on the hotkeys</i>
             <div>
                 <h3>Modes</h3>
-                <i>Swap between editing modes</i>
+                <i>
+                    Swap between editing modes. Press any mode twice to enter
+                    viewing mode.
+                </i>
                 <ul>
                     <li>
                         <kbd>a</kbd>: Add
@@ -59,9 +62,6 @@ export default function App() {
                     </li>
                     <li>
                         <kbd>i</kbd>: Insert after stitch
-                    </li>
-                    <li>
-                        <kbd>v</kbd>: View
                     </li>
                     <li>
                         <kbd>b</kbd>: Rebase
@@ -90,6 +90,20 @@ export default function App() {
                     </li>
                     <li>
                         <kbd>7</kbd>: Double Treble Crochet (dtr)
+                    </li>
+                </ul>
+                <h3>Move Mode Tools</h3>
+                <i>Tools that are only applicable in the move editing mode</i>
+                <ul>
+                    <li>
+                        <kbd>v</kbd>: Align stitches vertically
+                    </li>
+                    <li>
+                        <kbd>h</kbd>: Align stitches horizontally
+                    </li>
+                    <li>
+                        <kbd>arrow keys</kbd>: Move stitches by 1 pixel. Hold{" "}
+                        <kbd>shift</kbd> to move by 10 pixels.
                     </li>
                 </ul>
                 <h3>Miscellaneous</h3>
