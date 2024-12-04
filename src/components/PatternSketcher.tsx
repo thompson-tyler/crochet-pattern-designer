@@ -34,6 +34,8 @@ export default function PatternSketcher({
         const ANCHOR_DOT_RADIUS = 12;
         const SLIP_STITCH_RADIUS = 8;
         const INTER_STITCH_SPACE = 8;
+        const ARROW_KEY_MOVE_AMOUNT = 1;
+        const ARROW_KEY_MOVE_AMOUNT_FAST = 10;
 
         const BACKGROUND_COLOR = p.color(255);
         const STITCH_COLOR = p.color(0);
@@ -77,6 +79,11 @@ export default function PatternSketcher({
             if (mode === m) mode = EditingMode.Viewing;
             else mode = m;
         };
+
+        const getArrowKeyMoveAmount = () =>
+            p.keyIsDown(p.SHIFT)
+                ? ARROW_KEY_MOVE_AMOUNT_FAST
+                : ARROW_KEY_MOVE_AMOUNT;
 
         const makeStitch = (
             x: number,
@@ -630,6 +637,7 @@ export default function PatternSketcher({
             }
         };
 
+        // Will only trigger once when key is pressed
         p.keyPressed = (e: object) => {
             if (!(e instanceof KeyboardEvent)) return;
             if (dragging !== null) return;
@@ -681,6 +689,30 @@ export default function PatternSketcher({
                     break;
                 case "s":
                     savePattern();
+                    break;
+                case "ArrowRight":
+                    if (mode === EditingMode.Moving)
+                        groupSelection.forEach((s) =>
+                            s.pos.add(getArrowKeyMoveAmount(), 0)
+                        );
+                    break;
+                case "ArrowLeft":
+                    if (mode === EditingMode.Moving)
+                        groupSelection.forEach((s) =>
+                            s.pos.add(-getArrowKeyMoveAmount(), 0)
+                        );
+                    break;
+                case "ArrowDown":
+                    if (mode === EditingMode.Moving)
+                        groupSelection.forEach((s) =>
+                            s.pos.add(0, getArrowKeyMoveAmount())
+                        );
+                    break;
+                case "ArrowUp":
+                    if (mode === EditingMode.Moving)
+                        groupSelection.forEach((s) =>
+                            s.pos.add(0, -getArrowKeyMoveAmount())
+                        );
                     break;
             }
         };
