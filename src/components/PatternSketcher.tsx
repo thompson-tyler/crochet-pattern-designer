@@ -15,6 +15,7 @@ enum EditingMode {
 type DragState = {
     stitch: Stitch;
     start: p5.Vector;
+    end: p5.Vector;
 };
 
 type SelectionBox = {
@@ -70,9 +71,10 @@ export default function PatternSketcher({
         let groupSelection = new Set<Stitch>();
         let dragSelectionBox: SelectionBox | null = null;
 
-        const setDragging = (stitch: Stitch) =>
-            (dragging = { stitch, start: p.createVector(p.mouseX, p.mouseY) });
-        const draggingStitch = () => (dragging ? dragging.stitch : null);
+        const setDragging = (stitch: Stitch) => {
+            const mousePos = p.createVector(p.mouseX, p.mouseY);
+            dragging = { stitch, start: mousePos, end: mousePos };
+        };
 
         const setMode = (m: EditingMode) => {
             groupSelection.clear();
@@ -86,22 +88,22 @@ export default function PatternSketcher({
                 : ARROW_KEY_MOVE_AMOUNT;
 
         const makeStitch = (
-            x: number,
-            y: number,
-            parent: Stitch = nextParent,
-            base: Stitch | null = draggingStitch(),
+            dragging: DragState,
             type: StitchType = stitchType
         ) => {
+            const base = type === StitchType.Chain ? null : dragging.stitch;
+            const parent = nextParent;
             const newStitch = {
-                pos: p.createVector(x, y),
+                pos: dragging.end,
                 parent,
                 base,
                 type,
             };
             // If a stitch was referencing the selected parent, reassign it to the new stitch
-            const child = stitches.find((s) => s.parent === nextParent);
-            if (child) child.parent = newStitch;
-            // Push the new stitch to the stitches array
+            stitches
+                .filter((s) => s.parent === nextParent)
+                .forEach((c) => (c.parent = newStitch));
+            // Push the new stitch
             stitches.push(newStitch);
             // Increment the next parent to the new stitch
             nextParent = newStitch;
@@ -125,10 +127,7 @@ export default function PatternSketcher({
         };
 
         const finishMove = (dragging: DragState) => {
-            const dragDiff = p5.Vector.sub(
-                p.createVector(p.mouseX, p.mouseY),
-                dragging.start
-            );
+            const dragDiff = p5.Vector.sub(dragging.end, dragging.start);
             groupSelection.forEach((s) => s.pos.add(dragDiff));
         };
 
@@ -433,9 +432,8 @@ export default function PatternSketcher({
             // Handle dragging
 
             const handleAddingDragging = (dragging: DragState) => {
-                const mousePos = p.createVector(p.mouseX, p.mouseY);
                 const addingGhost = {
-                    pos: mousePos,
+                    pos: dragging.end,
                     parent: nextParent,
                     base: dragging.stitch,
                     type: stitchType,
@@ -446,8 +444,7 @@ export default function PatternSketcher({
             };
             const handleMovingDragging = (dragging: DragState) => {
                 // Create fictitious stitches to represent where the group selection will move to after release
-                const mousePos = p.createVector(p.mouseX, p.mouseY);
-                const dragDiff = p5.Vector.sub(mousePos, dragging.start);
+                const dragDiff = p5.Vector.sub(dragging.end, dragging.start);
                 const ghostMap = new Map(
                     Array.from(groupSelection).map((s) => [
                         s,
@@ -472,7 +469,7 @@ export default function PatternSketcher({
             const handleRebasingDragging = (dragging: DragState) => {
                 // Create a fictitious base stitch for the ghost stitch to use as its base
                 const fakeBase = hovering || {
-                    pos: p.createVector(p.mouseX, p.mouseY),
+                    pos: dragging.end,
                     parent: null,
                     base: null,
                     type: StitchType.Slip,
@@ -488,6 +485,7 @@ export default function PatternSketcher({
                 drawStitch(rebaseGhost);
             };
             if (dragging !== null) {
+                dragging.end = p.createVector(p.mouseX, p.mouseY);
                 switch (mode) {
                     case EditingMode.Adding:
                         handleAddingDragging(dragging);
@@ -663,7 +661,7 @@ export default function PatternSketcher({
             if (dragging !== null) {
                 switch (mode) {
                     case EditingMode.Adding:
-                        makeStitch(p.mouseX, p.mouseY);
+                        makeStitch(dragging);
                         break;
                     case EditingMode.Moving:
                         finishMove(dragging);
