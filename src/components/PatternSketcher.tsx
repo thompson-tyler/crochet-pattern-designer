@@ -124,6 +124,18 @@ export default function PatternSketcher({
             stitches = stitches.filter((s) => s !== stitch);
         };
 
+        const finishMove = (dragging: DragState) => {
+            const dragDiff = p5.Vector.sub(
+                p.createVector(p.mouseX, p.mouseY),
+                dragging.start
+            );
+            groupSelection.forEach((s) => s.pos.add(dragDiff));
+        };
+
+        const finishRebase = (dragging: DragState) => {
+            if (hovering) dragging.stitch.base = hovering;
+        };
+
         const exportPattern = () => {
             const jsonString = stitchesToJSON(stitches);
             const filename =
@@ -419,48 +431,72 @@ export default function PatternSketcher({
             }
 
             // Handle dragging
+
+            const handleAddingDragging = (dragging: DragState) => {
+                const mousePos = p.createVector(p.mouseX, p.mouseY);
+                const addingGhost = {
+                    pos: mousePos,
+                    parent: nextParent,
+                    base: dragging.stitch,
+                    type: stitchType,
+                };
+                p.stroke(STITCH_GHOST_COLOR);
+                p.noFill();
+                drawStitch(addingGhost);
+            };
+            const handleMovingDragging = (dragging: DragState) => {
+                // Create fictitious stitches to represent where the group selection will move to after release
+                const mousePos = p.createVector(p.mouseX, p.mouseY);
+                const dragDiff = p5.Vector.sub(mousePos, dragging.start);
+                const ghostMap = new Map(
+                    Array.from(groupSelection).map((s) => [
+                        s,
+                        {
+                            ...s,
+                            pos: p5.Vector.add(dragDiff, s.pos),
+                        },
+                    ])
+                );
+                Array.from(ghostMap.values()).forEach((ghost) => {
+                    if (ghost.base !== null)
+                        ghost.base = ghostMap.get(ghost.base) || ghost.base;
+                    if (ghost.parent !== null)
+                        ghost.parent =
+                            ghostMap.get(ghost.parent) || ghost.parent;
+                });
+                // Draw moving ghosts
+                p.stroke(STITCH_GHOST_COLOR);
+                p.noFill();
+                Array.from(ghostMap.values()).forEach(drawStitch);
+            };
+            const handleRebasingDragging = (dragging: DragState) => {
+                // Create a fictitious base stitch for the ghost stitch to use as its base
+                const fakeBase = hovering || {
+                    pos: p.createVector(p.mouseX, p.mouseY),
+                    parent: null,
+                    base: null,
+                    type: StitchType.Slip,
+                };
+                const rebaseGhost = {
+                    pos: dragging.stitch.pos,
+                    parent: dragging.stitch.parent,
+                    base: fakeBase,
+                    type: dragging.stitch.type,
+                };
+                p.stroke(STITCH_GHOST_COLOR);
+                p.noFill();
+                drawStitch(rebaseGhost);
+            };
             if (dragging !== null) {
                 switch (mode) {
                     case EditingMode.Adding:
-                        const addingGhost = {
-                            pos: p.createVector(p.mouseX, p.mouseY),
-                            parent: nextParent,
-                            base: dragging.stitch,
-                            type: stitchType,
-                        };
-                        p.stroke(STITCH_GHOST_COLOR);
-                        p.noFill();
-                        drawStitch(addingGhost);
+                        handleAddingDragging(dragging);
                         break;
                     case EditingMode.Moving:
-                        const { start } = dragging;
-                        groupSelection.forEach((s) => {
-                            s.pos.add(
-                                p.createVector(p.mouseX, p.mouseY).sub(start)
-                            );
-                        });
-                        dragging.start = p.createVector(p.mouseX, p.mouseY);
+                        handleMovingDragging(dragging);
                         break;
                     case EditingMode.Rebasing:
-                        // Create a fictitious base stitch for the ghost stitch to use as its base
-                        const fakeBase =
-                            hovering && canDrag(hovering, EditingMode.Adding)
-                                ? hovering
-                                : {
-                                      pos: p.createVector(p.mouseX, p.mouseY),
-                                      parent: null,
-                                      base: null,
-                                      type: StitchType.Slip,
-                                  };
-                        const rebaseGhost = {
-                            pos: dragging.stitch.pos,
-                            parent: dragging.stitch.parent,
-                            base: fakeBase,
-                            type: dragging.stitch.type,
-                        };
-                        p.stroke(STITCH_GHOST_COLOR);
-                        p.noFill();
-                        drawStitch(rebaseGhost);
+                        handleRebasingDragging(dragging);
                         break;
                 }
             }
@@ -629,8 +665,11 @@ export default function PatternSketcher({
                     case EditingMode.Adding:
                         makeStitch(p.mouseX, p.mouseY);
                         break;
+                    case EditingMode.Moving:
+                        finishMove(dragging);
+                        break;
                     case EditingMode.Rebasing:
-                        if (hovering) dragging.stitch.base = hovering;
+                        finishRebase(dragging);
                         break;
                 }
                 dragging = null;
