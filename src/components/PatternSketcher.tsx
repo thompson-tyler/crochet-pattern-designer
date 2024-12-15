@@ -72,8 +72,11 @@ export default function PatternSketcher({
         let dragSelectionBox: SelectionBox | null = null;
 
         const setDragging = (stitch: Stitch) => {
-            const mousePos = p.createVector(p.mouseX, p.mouseY);
-            dragging = { stitch, start: mousePos, end: mousePos };
+            dragging = {
+                stitch,
+                start: anchorForMode(stitch),
+                end: p.createVector(p.mouseX, p.mouseY),
+            };
         };
 
         const setMode = (m: EditingMode) => {
@@ -486,6 +489,18 @@ export default function PatternSketcher({
             };
             if (dragging !== null) {
                 dragging.end = p.createVector(p.mouseX, p.mouseY);
+                if (p.keyIsDown(p.SHIFT)) {
+                    // snap to vertical, horizontal, or diagonal movement
+                    const dx = dragging.end.x - dragging.start.x;
+                    const dy = dragging.end.y - dragging.start.y;
+                    const a = p.atan2(dy, dx);
+                    const roundedA = p.round(a / (p.PI / 4)) * (p.PI / 4);
+                    const d = Math.sqrt(dx ** 2 + dy ** 2);
+                    dragging.end = p.createVector(
+                        dragging.start.x + d * p.cos(roundedA),
+                        dragging.start.y + d * p.sin(roundedA)
+                    );
+                }
                 switch (mode) {
                     case EditingMode.Adding:
                         handleAddingDragging(dragging);
